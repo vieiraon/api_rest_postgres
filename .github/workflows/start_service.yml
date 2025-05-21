@@ -1,0 +1,15 @@
+name: Ligar API às 08h BRT (11h UTC)
+
+on:
+  schedule:
+    - cron: '0 11 * * 1-5'  # 08h BRT = 11h UTC (dias úteis)
+
+jobs:
+  start-service:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Iniciar serviço na Render
+        run: |
+          curl -X PUT https://api.render.com/v1/services/srv-d0n1phali9vc7380gu5g/resume \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json"
