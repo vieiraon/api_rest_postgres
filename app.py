@@ -5,8 +5,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = FastAPI()
+DB_URL = os.getenv("DB_URL")
 
 API_TOKEN = os.getenv("API_TOKEN")
+engine = create_engine(DB_URL)
 
 @app.get("/")
 def status():
