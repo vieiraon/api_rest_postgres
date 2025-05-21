@@ -1,26 +1,29 @@
-from fastapi import FastAPI
-from sqlalchemy import create_engine
-from sqlalchemy.exc import SQLAlchemyError
-from dotenv import load_dotenv
 import os
-import pandas as pd
+from fastapi import FastAPI, Request, HTTPException, status
+from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
 
 load_dotenv()
-
 app = FastAPI()
 
-DB_URL = os.getenv("DB_URL")
-engine = create_engine(DB_URL)
+API_TOKEN = os.getenv("API_TOKEN")
 
-@app.get("/")
-def home():
-    return {"message": "API está ativo"}
+# Middleware simples para verificar token
+@app.middleware("http")
+async def verificar_token(request: Request, call_next):
+    if request.url.path.startswith("/pessoas"):  # Protege só esse endpoint (ou outros que quiser)
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token ausente ou inválido")
 
+        token = auth_header.split(" ")[1]
+        if token != API_TOKEN:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token inválido")
+
+    response = await call_next(request)
+    return response
+
+# Exemplo de endpoint protegido
 @app.get("/pessoas")
 def get_pessoas():
-    try:
-        with engine.connect() as conn:
-            df = pd.read_sql("SELECT ch_pessoa FROM pessoas LIMIT 10", conn)
-        return df.to_dict(orient="records")
-    except SQLAlchemyError as e:
-        return {"error": str(e)}
+    return [{"nome": "João"}, {"nome": "Maria"}]
