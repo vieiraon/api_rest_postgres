@@ -8,6 +8,10 @@ app = FastAPI()
 
 API_TOKEN = os.getenv("API_TOKEN")
 
+@app.get("/")
+def status():
+    return {"message": "API está online"}
+
 # Middleware simples para verificar token
 @app.middleware("http")
 async def verificar_token(request: Request, call_next):
@@ -26,4 +30,9 @@ async def verificar_token(request: Request, call_next):
 # Exemplo de endpoint protegido
 @app.get("/pessoas")
 def get_pessoas():
-    return [{"nome": "João"}, {"nome": "Maria"}]
+    try:
+        with engine.connect() as conn:
+            df = pd.read_sql("SELECT COUNT(*) FROM pessoas", conn)
+        return df.to_dict(orient="records")
+    except Exception as e:
+        return {"error": str(e)}
